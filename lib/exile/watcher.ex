@@ -54,9 +54,12 @@ defmodule Exile.Watcher do
   end
 
   defp attempt_graceful_exit(os_pid) do
-    Logger.debug("Failed to stop external program gracefully. attempting SIGTERM")
-    Nif.nif_kill(os_pid, :sigterm)
-    process_exit?(os_pid, 100) && throw(:done)
+
+    for attempt <- 1..3 do
+      Logger.debug("Failed to stop external program gracefully. attempting #{attempt} SIGTERM")
+      Nif.nif_kill(os_pid, :sigterm)
+      process_exit?(os_pid, 100) && throw(:done)
+    end
 
     Logger.debug("Failed to stop external program with SIGTERM. attempting SIGKILL")
     Nif.nif_kill(os_pid, :sigkill)
